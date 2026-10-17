@@ -1,0 +1,1 @@
+<svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1E3B2F"/><path d="M8 48 L26 20 L36 35 L42 27 L56 48 Z" fill="#EDF1EC"/><circle cx="45" cy="17" r="5" fill="#F2B134"/></svg>
