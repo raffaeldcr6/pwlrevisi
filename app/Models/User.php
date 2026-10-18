@@ -10,7 +10,7 @@ class User extends Authenticatable
 {
     use Notifiable;
 
-    public const ROLE_ADMIN = 'admin';
+    public const ROLE_ADMIN    = 'admin';
     public const ROLE_CUSTOMER = 'customer';
 
     protected $fillable = ['name', 'email', 'password', 'role', 'phone', 'address'];
@@ -32,6 +32,16 @@ class User extends Authenticatable
     public function rentals(): HasMany
     {
         return $this->hasMany(Rental::class);
+    }
+
+    public function appNotifications(): HasMany
+    {
+        return $this->hasMany(AppNotification::class);
+    }
+
+    public function unreadNotificationsCount(): int
+    {
+        return $this->appNotifications()->whereNull('read_at')->count();
     }
 
     public function getFirstNameAttribute(): string

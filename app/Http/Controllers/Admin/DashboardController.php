@@ -38,12 +38,15 @@ class DashboardController extends Controller
             'value' => $byMonth->get($m->format('Y-m'), 0),
         ]);
 
+        $counts = Rental::selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
+
         return view('admin.dashboard', [
-            'stats' => $stats,
-            'chart' => $chart,
+            'stats'    => $stats,
+            'chart'    => $chart,
             'chartMax' => max(1, $chart->max('value')),
-            'recent' => Rental::with('user')->latest()->take(6)->get(),
-            'top' => Equipment::with('category')
+            'counts'   => $counts,
+            'recent'   => Rental::with('user')->latest()->take(6)->get(),
+            'top'      => Equipment::with('category')
                 ->withSum('rentalItems', 'qty')
                 ->orderByDesc('rental_items_sum_qty')
                 ->take(5)

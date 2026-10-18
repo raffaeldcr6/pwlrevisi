@@ -10,7 +10,7 @@ class Equipment extends Model
 {
     protected $table = 'equipment';
 
-    public const STATUS_AVAILABLE = 'available';
+    public const STATUS_AVAILABLE  = 'available';
     public const STATUS_MAINTENANCE = 'maintenance';
 
     public const STATUSES = [
@@ -18,15 +18,28 @@ class Equipment extends Model
         self::STATUS_MAINTENANCE => 'Perawatan',
     ];
 
+    public const CONDITION_NEW  = 'new';
+    public const CONDITION_GOOD = 'good';
+    public const CONDITION_FAIR = 'fair';
+    public const CONDITION_POOR = 'poor';
+
+    public const CONDITIONS = [
+        self::CONDITION_NEW  => 'Baru',
+        self::CONDITION_GOOD => 'Baik',
+        self::CONDITION_FAIR => 'Cukup Baik',
+        self::CONDITION_POOR => 'Perlu Perhatian',
+    ];
+
     protected $fillable = [
-        'category_id', 'name', 'description', 'price_per_day', 'stock', 'image', 'status',
+        'category_id', 'name', 'description', 'specifications',
+        'price_per_day', 'stock', 'image', 'status', 'condition',
     ];
 
     protected function casts(): array
     {
         return [
             'price_per_day' => 'integer',
-            'stock' => 'integer',
+            'stock'         => 'integer',
         ];
     }
 
@@ -42,17 +55,22 @@ class Equipment extends Model
 
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image ? asset('storage/'.$this->image) : null;
+        return $this->image ? asset('storage/' . $this->image) : null;
     }
 
     public function getPriceFormattedAttribute(): string
     {
-        return 'Rp '.number_format($this->price_per_day, 0, ',', '.');
+        return 'Rp ' . number_format($this->price_per_day, 0, ',', '.');
     }
 
     public function getStatusLabelAttribute(): string
     {
         return self::STATUSES[$this->status] ?? $this->status;
+    }
+
+    public function getConditionLabelAttribute(): string
+    {
+        return self::CONDITIONS[$this->condition] ?? $this->condition;
     }
 
     public function isRentable(): bool
