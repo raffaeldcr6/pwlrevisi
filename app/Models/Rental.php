@@ -9,11 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Rental extends Model
 {
-    public const PENDING = 'pending';
-    public const APPROVED = 'approved';
-    public const RENTED = 'rented';
-    public const RETURNED = 'returned';
-    public const REJECTED = 'rejected';
+    public const PENDING   = 'pending';
+    public const APPROVED  = 'approved';
+    public const RENTED    = 'rented';
+    public const RETURNED  = 'returned';
+    public const REJECTED  = 'rejected';
     public const CANCELLED = 'cancelled';
 
     public const STATUSES = [
@@ -35,16 +35,22 @@ class Rental extends Model
         self::RENTED   => [self::RETURNED],
     ];
 
+    /** Denda keterlambatan per hari dalam persen dari total harga. */
+    public const LATE_FEE_PERCENT_PER_DAY = 10;
+
     protected $fillable = [
-        'user_id', 'code', 'start_date', 'end_date', 'total_price', 'status', 'note', 'admin_note',
+        'user_id', 'code', 'start_date', 'end_date', 'total_price', 'status',
+        'note', 'admin_note', 'condition_out', 'condition_in', 'late_fee', 'returned_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'start_date' => 'date',
-            'end_date' => 'date',
+            'start_date'  => 'date',
+            'end_date'    => 'date',
+            'returned_at' => 'date',
             'total_price' => 'integer',
+            'late_fee'    => 'integer',
         ];
     }
 
@@ -56,6 +62,11 @@ class Rental extends Model
     public function items(): HasMany
     {
         return $this->hasMany(RentalItem::class);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(AppNotification::class);
     }
 
     /** Jumlah hari sewa (hari mulai dan hari selesai sama-sama dihitung). */
@@ -74,7 +85,22 @@ class Rental extends Model
 
     public function getTotalFormattedAttribute(): string
     {
-        return 'Rp '.number_format($this->total_price, 0, ',', '.');
+        return 'Rp ' . number_format($this->total_price, 0, ',', '.');
+    }
+
+    public function getLateFeeFormattedAttribute(): string
+    {
+        return 'Rp ' . number_format($this->late_fee, 0, ',', '.');
+    }
+
+    public function getGrandTotalAttribute(): int
+    {
+        return $this->total_price + $this->late_fee;
+    }
+
+    public function getGrandTotalFormattedAttribute(): string
+    {
+        return 'Rp ' . number_format($this->grand_total, 0, ',', '.');
     }
 
     public function getStatusLabelAttribute(): string
@@ -102,5 +128,28 @@ class Rental extends Model
     public function isDeletableByAdmin(): bool
     {
         return in_array($this->status, [self::RETURNED, self::REJECTED, self::CANCELLED], true);
+    }
+
+    /**
+     * Hitung denda keterlambatan berdasarkan tanggal pengembalian aktual.
+     * Denda = LATE_FEE_PERCENT_PER_DAY% dari total_price per hari terlambat.
+     */
+    public function calculateLateFee(?string $returnedAt = null): int
+    {
+        $returned = Carbon::parse($returnedAt ?? now());
+        $due      = Carbon::parse($this->end_date)->startOfDay();
+
+        $lateDays = (int) max(0, $due->diffInDays($returned->startOfDay(), false) * -1);
+        // diffInDays dengan false: positif jika returned sebelum due, negatif jika setelah due
+        // Kita pakai: jika returned > due, maka terlambat
+        $actualLate = $returned->startOfDay()->gt($due)
+            ? (int) $due->diffInDays($returned->startOfDay())
+            : 0;
+
+        if ($actualLate <= 0) {
+            return 0;
+        }
+
+        return (int) round($this->total_price * (self::LATE_FEE_PERCENT_PER_DAY / 100) * $actualLate);
     }
 }

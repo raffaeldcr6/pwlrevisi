@@ -24,9 +24,20 @@ Route::post('/keluar', [AuthController::class, 'logout'])->middleware('auth')->n
 
 // ---------------------------------------------------------------- Customer
 Route::middleware(['auth', 'role:customer'])->group(function () {
+    // Penyewaan
     Route::resource('penyewaan', Customer\RentalController::class)
         ->parameters(['penyewaan' => 'rental'])
         ->names('customer.rentals');
+
+    // Profil
+    Route::get('/profil', [Customer\ProfileController::class, 'show'])->name('customer.profile');
+    Route::put('/profil/info', [Customer\ProfileController::class, 'updateInfo'])->name('customer.profile.info');
+    Route::put('/profil/sandi', [Customer\ProfileController::class, 'updatePassword'])->name('customer.profile.password');
+
+    // Notifikasi
+    Route::get('/notifikasi', [Customer\NotificationController::class, 'index'])->name('customer.notifications.index');
+    Route::get('/notifikasi/jumlah', [Customer\NotificationController::class, 'count'])->name('customer.notifications.count');
+    Route::post('/notifikasi/{notification}/baca', [Customer\NotificationController::class, 'markRead'])->name('customer.notifications.read');
 });
 
 // ---------------------------------------------------------------- Admin
@@ -47,4 +58,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('penyewaan/{rental}', [Admin\RentalController::class, 'show'])->name('rentals.show');
     Route::patch('penyewaan/{rental}/status', [Admin\RentalController::class, 'updateStatus'])->name('rentals.status');
     Route::delete('penyewaan/{rental}', [Admin\RentalController::class, 'destroy'])->name('rentals.destroy');
+
+    // Manajemen customer
+    Route::get('pelanggan', [Admin\CustomerController::class, 'index'])->name('customers.index');
+    Route::get('pelanggan/{customer}', [Admin\CustomerController::class, 'show'])->name('customers.show');
 });

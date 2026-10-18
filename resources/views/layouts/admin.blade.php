@@ -12,10 +12,11 @@
 <body>
 @php
     $nav = [
-        ['admin.dashboard', 'bi-speedometer2', 'Dashboard', 'admin.dashboard'],
-        ['admin.rentals.index', 'bi-calendar-check', 'Penyewaan', 'admin.rentals.*'],
-        ['admin.equipment.index', 'bi-box-seam', 'Data Alat', 'admin.equipment.*'],
-        ['admin.categories.index', 'bi-tags', 'Kategori', 'admin.categories.*'],
+        ['admin.dashboard',       'bi-speedometer2',    'Dashboard',   'admin.dashboard'],
+        ['admin.rentals.index',   'bi-calendar-check',  'Penyewaan',   'admin.rentals.*'],
+        ['admin.equipment.index', 'bi-box-seam',        'Data Alat',   'admin.equipment.*'],
+        ['admin.categories.index','bi-tags',             'Kategori',    'admin.categories.*'],
+        ['admin.customers.index', 'bi-people',           'Pelanggan',   'admin.customers.*'],
     ];
     $pending = \App\Models\Rental::where('status', 'pending')->count();
 @endphp
@@ -30,8 +31,14 @@
     <div class="offcanvas-body p-3">
         <nav class="sidebar" style="height:auto; position:static; padding:0">
             @foreach ($nav as [$route, $icon, $label, $pattern])
-                <a href="{{ route($route) }}" class="{{ request()->routeIs($pattern) ? 'active' : '' }}"><i class="bi {{ $icon }}"></i>{{ $label }}</a>
+                <a href="{{ route($route) }}" class="{{ request()->routeIs($pattern) ? 'active' : '' }}">
+                    <i class="bi {{ $icon }}"></i>{{ $label }}
+                    @if ($route === 'admin.rentals.index' && $pending > 0)
+                        <span class="badge rounded-pill ms-auto" style="background: var(--rv-lantern); color: var(--rv-pine)">{{ $pending }}</span>
+                    @endif
+                </a>
             @endforeach
+            <a href="{{ route('home') }}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i>Lihat website</a>
             <form action="{{ route('logout') }}" method="POST" class="mt-3">
                 @csrf
                 <button class="btn btn-sm w-100 text-start" style="color:#CFE0D3; background: rgba(255,255,255,.08)" type="submit"><i class="bi bi-box-arrow-right me-2"></i>Keluar</button>
@@ -42,7 +49,7 @@
 
 <div class="admin-shell">
     <aside class="sidebar">
-        <a href="{{ route('admin.dashboard') }}" class="rv-brand">@include('partials.logo') RentVentures</a>
+        <a href="{{ route('admin.dashboard') }}" class="rv-brand"><img src="{{ asset('img/LogoRentVentures.png') }}" alt="Logo" style="width:36px;height:36px;object-fit:contain;"> RentVentures</a>
         <nav>
             @foreach ($nav as [$route, $icon, $label, $pattern])
                 <a href="{{ route($route) }}" class="{{ request()->routeIs($pattern) ? 'active' : '' }}">
